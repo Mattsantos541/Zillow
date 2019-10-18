@@ -1,5 +1,8 @@
 from env import host, user, password
-
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
 url = f'mysql+pymysql://{user}:{password}@{host}/zillow'
 ###Wrangle
 def get_db_url(db):
@@ -7,16 +10,24 @@ def get_db_url(db):
 
 def get_data_from_mysql():
     query = '''
-    SELECT *
-    FROM customers
-    JOIN internet_service_types USING (internet_service_type_id)
-    WHERE contract_type_id = 3
+SELECT bedroomcnt, 
+       bathroomcnt, 
+       taxvaluedollarcnt, 
+       propertylandusedesc,
+       propertylandusetypeid,
+       calculatedfinishedsquarefeet
+FROM predictions_2017 as pred
+JOIN properties_2017 as prop USING(id)
+JOIN propertylandusetype as proptype USING(propertylandusetypeid)
+WHERE (transactiondate LIKE "2017-05%%" OR transactiondate LIKE "2017-06%%") 
+    AND propertylandusetypeid = "261" 
+    OR (propertylandusetypeid = "279" AND propertylandusedesc="Single Family Residential")
+ORDER BY transactiondate;
+    '''
 
-def clean_data(df):
-    df = df[['customer_id', 'total_charges', 'monthly_charges', 'tenure']]
-    df.total_charges = df.total_charges.str.strip().replace('', np.nan).astype(float)
-    df = df.dropna()
+    df = pd.read_sql(query, url)
     return df
+
 
 
 def plot_residuals(x, y):
@@ -53,4 +64,3 @@ def evaluation_example1(df, x, y):
     plt.figure(figsize=(8, 5))
     plt.scatter(x, y, color='dimgray')
 
-Evaluate
