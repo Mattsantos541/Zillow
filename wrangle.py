@@ -9,24 +9,48 @@ def get_db_url(db):
     return f'mysql+pymysql://{env.user}:{env.password}@{env.host}/{db}'
 
 def get_data_from_mysql():
-    query = '''
-SELECT id, bedroomcnt, 
-       bathroomcnt, 
-       taxvaluedollarcnt, 
-       propertylandusedesc,
-       propertylandusetypeid,
-       calculatedfinishedsquarefeet
-FROM predictions_2017 as pred
-JOIN properties_2017 as prop USING(id)
-JOIN propertylandusetype as proptype USING(propertylandusetypeid)
-WHERE (transactiondate LIKE "2017-05%%" OR transactiondate LIKE "2017-06%%")
-    AND calculatedfinishedsquarefeet IS NOT NULL
-    AND propertylandusetypeid = "261" 
-    OR (propertylandusetypeid = "279" AND propertylandusedesc="Single Family Residential")
-ORDER BY transactiondate;
-    '''
+    df = pd.read_sql(
+'''select parcelid, bedroomcnt, bathroomcnt, fips, calculatedfinishedsquarefeet as squarefeet, taxvaluedollarcnt, taxamount, unitcnt, propertylandusetypeid, propertylandusedesc
+	from predictions_2017
+	join properties_2017 using(parcelid)
+	left join propertylandusetype using(propertylandusetypeid)
+	where ((transactiondate like "2017-05%%" or transactiondate like "2017-06%%") and calculatedfinishedsquarefeet is not null);'''
+,url)
+    return df
 
-    df = pd.read_sql(query, url)
+import pandas as pd
+from env import host, user, password
+
+def get_db_url(username, hostname, password, db_name):
+    return f'mysql+pymysql://{username}:{password}@{hostname}/{db_name}'
+
+
+
+url = get_db_url(user, host, password, 'zillow')
+
+def taxcounty():
+    df = pd.read_sql("""
+    SELECT p.taxvaluedollarcnt as tax_value, p.fips, p.taxamount, round(p.taxamount/p.taxvaluedollarcnt,4) as tax_rate 
+FROM propertylandusetype pl
+JOIN
+properties_2017 p ON p.propertylandusetypeid = pl.propertylandusetypeid
+JOIN
+predictions_2017 p17 ON p17.id = p.id
+WHERE 
+p.propertylandusetypeid in (279,261) 
+AND 
+(p17.transactiondate LIKE '%%2017-05%%' or p17.transactiondate LIKE '%%2017-06%%')
+AND
+p.calculatedfinishedsquarefeet IS NOT NULL
+and
+p.bedroomcnt > 0
+and 
+p.bathroomcnt > 0
+and
+p.taxvaluedollarcnt > 0
+and
+p.taxamount > 0
+""",url)
     return df
 
 
