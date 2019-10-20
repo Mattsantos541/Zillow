@@ -10,7 +10,7 @@ def get_db_url(db):
 
 def get_data_from_mysql():
     query = '''
-SELECT bedroomcnt, 
+SELECT id, bedroomcnt, 
        bathroomcnt, 
        taxvaluedollarcnt, 
        propertylandusedesc,
@@ -19,7 +19,8 @@ SELECT bedroomcnt,
 FROM predictions_2017 as pred
 JOIN properties_2017 as prop USING(id)
 JOIN propertylandusetype as proptype USING(propertylandusetypeid)
-WHERE (transactiondate LIKE "2017-05%%" OR transactiondate LIKE "2017-06%%") 
+WHERE (transactiondate LIKE "2017-05%%" OR transactiondate LIKE "2017-06%%")
+    AND calculatedfinishedsquarefeet IS NOT NULL
     AND propertylandusetypeid = "261" 
     OR (propertylandusetypeid = "279" AND propertylandusedesc="Single Family Residential")
 ORDER BY transactiondate;
@@ -64,3 +65,18 @@ def evaluation_example1(df, x, y):
     plt.figure(figsize=(8, 5))
     plt.scatter(x, y, color='dimgray')
 
+
+
+def plot_regression(x,y):
+    res = sm.OLS(y, x).fit()
+    prstd, iv_l, iv_u = wls_prediction_std(res)
+
+    fig, ax = plt.subplots(figsize=(8,6))
+
+    ax.plot(x, y, 'o', label="data")
+    #ax.plot(x, y, 'b-', label="True")
+    ax.plot(x, res.fittedvalues, 'r--.', label="OLS")
+    ax.plot(x, iv_u, 'g--',label='97.5% Confidence Level')
+    ax.plot(x, iv_l, 'b--',label='2.5% Confidence Level')
+    ax.legend(loc='best');
+    plt.show()
