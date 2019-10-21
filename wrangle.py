@@ -11,7 +11,7 @@ def get_db_url(db):
 def get_data_from_mysql():
     df = pd.read_sql(
 '''SELECT 
-p17.transactiondate,p.id,p.bathroomcnt as bathrooms,p.bedroomcnt as bedrooms, `lotsizesquarefeet`,p.calculatedfinishedsquarefeet as sqft, p.taxvaluedollarcnt as tax_value
+p17.transactiondate,p.id,p.bathroomcnt as bathrooms,p.bedroomcnt as bedrooms, `lotsizesquarefeet`,p.calculatedfinishedsquarefeet as sqft, p.taxvaluedollarcnt as tax_value, `regionidcity` as region_id
 FROM propertylandusetype pl
 JOIN
 properties_2017 p ON p.propertylandusetypeid = pl.propertylandusetypeid
@@ -30,7 +30,9 @@ p.bathroomcnt > 0
 and
 p.taxvaluedollarcnt > 0
 and 
-`lotsizesquarefeet` >0;'''
+`lotsizesquarefeet` >0
+and 
+regionidcity > 0;'''
 ,url)
     return df
 
