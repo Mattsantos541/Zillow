@@ -10,11 +10,27 @@ def get_db_url(db):
 
 def get_data_from_mysql():
     df = pd.read_sql(
-'''select parcelid, bedroomcnt, bathroomcnt, fips, calculatedfinishedsquarefeet as squarefeet, taxvaluedollarcnt, taxamount, unitcnt, propertylandusetypeid, propertylandusedesc
-	from predictions_2017
-	join properties_2017 using(parcelid)
-	left join propertylandusetype using(propertylandusetypeid)
-	where ((transactiondate like "2017-05%%" or transactiondate like "2017-06%%") and calculatedfinishedsquarefeet is not null);'''
+'''SELECT 
+p17.transactiondate,p.id,p.bathroomcnt as bathrooms,p.bedroomcnt as bedrooms, `lotsizesquarefeet`,p.calculatedfinishedsquarefeet as sqft, p.taxvaluedollarcnt as tax_value
+FROM propertylandusetype pl
+JOIN
+properties_2017 p ON p.propertylandusetypeid = pl.propertylandusetypeid
+JOIN
+predictions_2017 p17 ON p17.id = p.id
+WHERE 
+p.propertylandusetypeid in (279,261) 
+AND 
+(p17.transactiondate LIKE '%%2017-05%%' or p17.transactiondate LIKE '%%2017-06%%')
+AND
+p.calculatedfinishedsquarefeet IS NOT NULL
+and
+p.bedroomcnt > 0
+and 
+p.bathroomcnt > 0
+and
+p.taxvaluedollarcnt > 0
+and 
+`lotsizesquarefeet` >0;'''
 ,url)
     return df
 
@@ -49,7 +65,8 @@ p.bathroomcnt > 0
 and
 p.taxvaluedollarcnt > 0
 and
-p.taxamount > 0
+p.taxamount > 0;
+
 """,url)
     return df
 
