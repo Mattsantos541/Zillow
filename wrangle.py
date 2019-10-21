@@ -46,7 +46,7 @@ def get_db_url(username, hostname, password, db_name):
 
 url = get_db_url(user, host, password, 'zillow')
 
-def taxcounty():
+def taxes():
     df = pd.read_sql("""
     SELECT p.taxvaluedollarcnt as tax_value, p.fips, p.taxamount, round(p.taxamount/p.taxvaluedollarcnt,4) as tax_rate 
 FROM propertylandusetype pl
